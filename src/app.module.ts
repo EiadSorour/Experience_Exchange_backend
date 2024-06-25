@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { RoomModule } from './room/room.module';
 import { UserRoomModule } from './user_room/userRoom.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { UserRoomModule } from './user_room/userRoom.module';
       autoLoadModels: true,
       synchronize: true
     }),
-    RoomModule, UserModule ,UserRoomModule
+    RoomModule, UserModule ,UserRoomModule, AuthModule
   ],
   controllers: [],
   providers: [],
