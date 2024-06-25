@@ -10,4 +10,8 @@ export class UserService{
     async addUser(userRegisterDto: UserRegisterDto): Promise<User>{
         return await this.userModel.create(userRegisterDto as any);
     }
+
+    async getUserByUsername(username:string): Promise<User>{
+        return await this.userModel.findOne({where: {username:username}});
+    }
 }
