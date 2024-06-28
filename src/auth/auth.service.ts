@@ -36,7 +36,7 @@ export class AuthService{
             throw new AppError("User doesn't exist" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
         }
         
-        const correctPassword:boolean = await bcrypt.compare(user.password , userLoginDto.password);
+        const correctPassword:boolean = await bcrypt.compare(userLoginDto.password , user.password);
         if(!correctPassword){
             throw new AppError("Incorrect password" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
         }
