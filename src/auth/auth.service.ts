@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from "@nestjs/jwt";
 import { AppError } from "src/utils/app.Error";
 import { HttpStatusMessage } from "src/utils/httpStatusMessage.enum";
+import { UserLoginDto } from "./dto/userLogin.dto";
 
 @Injectable()
 export class AuthService{
@@ -26,6 +27,23 @@ export class AuthService{
 
         const payload = {   id: user.userID , username: user.username , role: user.role , 
                             profession: user.profession , isBlock3d: user.isBlocked };
+        return this.jwtService.sign(payload);
+    }
+
+    async login(userLoginDto:UserLoginDto): Promise<string>{
+        const user:User = await this.userService.getUserByUsername(userLoginDto.username);
+        if(!user){
+            throw new AppError("User doesn't exist" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
+        }
+        
+        const correctPassword:boolean = await bcrypt.compare(user.password , userLoginDto.password);
+        if(!correctPassword){
+            throw new AppError("Incorrect password" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
+        }
+
+        const payload = {   id: user.userID , username: user.username , role: user.role , 
+            profession: user.profession , isBlock3d: user.isBlocked };
+
         return this.jwtService.sign(payload);
     }
 }
