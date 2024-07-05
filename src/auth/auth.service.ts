@@ -26,11 +26,11 @@ export class AuthService{
         const user = await this.userService.addUser(userRegisterDto);
 
         const payload = {   id: user.userID , username: user.username , role: user.role , 
-                            profession: user.profession , isBlock3d: user.isBlocked };
+                            profession: user.profession , isBlocked: user.isBlocked };
         return this.jwtService.sign(payload);
     }
 
-    async login(userLoginDto:UserLoginDto): Promise<string>{
+    async login(userLoginDto:UserLoginDto): Promise<{accessToken:string,refreshToken:string}>{
         const user:User = await this.userService.getUserByUsername(userLoginDto.username);
         if(!user){
             throw new AppError("User doesn't exist" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
@@ -42,8 +42,11 @@ export class AuthService{
         }
 
         const payload = {   id: user.userID , username: user.username , role: user.role , 
-            profession: user.profession , isBlock3d: user.isBlocked };
+            profession: user.profession , isBlocked: user.isBlocked };
 
-        return this.jwtService.sign(payload);
+        const accessToken = this.jwtService.sign(payload , {expiresIn: process.env.ACCESS_TOKEN_EXPIRES});
+        const refreshToken = this.jwtService.sign(payload, {expiresIn: process.env.REFRESH_TOKEN_EXPIRES});
+
+        return {accessToken,refreshToken};
     }
 }

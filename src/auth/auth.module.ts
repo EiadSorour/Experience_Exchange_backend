@@ -11,8 +11,7 @@ import { ConfigModule } from "@nestjs/config";
         ConfigModule.forRoot({envFilePath: '.env.development'}),
         JwtModule.register({
             global: true,
-            secret: process.env.JWT_SECRET,
-            signOptions: { expiresIn: process.env.EXPIRES },
+            secret: process.env.JWT_SECRET
         }),
         UserModule
     ],

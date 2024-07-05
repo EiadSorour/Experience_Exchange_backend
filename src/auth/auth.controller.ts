@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import { Body, Controller, HttpCode, HttpStatus, Post} from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UserRegisterDto } from "./dto/userRegister.dto";
 import { HttpStatusMessage } from "src/utils/httpStatusMessage.enum";
@@ -18,7 +18,9 @@ export class AuthController{
     @Post("/login")
     @HttpCode(HttpStatus.OK)
     async login(@Body() userLoginDto:UserLoginDto){
-        const token = await this.authService.login(userLoginDto);
-        return {status: HttpStatusMessage.SUCCESS , data: {token}}
+        const tokens = await this.authService.login(userLoginDto);
+        const accessToken = tokens.accessToken;
+        const refreshToken = tokens.refreshToken;
+        return {status: HttpStatusMessage.SUCCESS , data: {accessToken,refreshToken}};
     }
 }
