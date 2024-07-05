@@ -14,7 +14,7 @@ export class AuthService{
         private readonly userService: UserService
     ){}
 
-    async register(userRegisterDto: UserRegisterDto): Promise<string>{
+    async register(userRegisterDto: UserRegisterDto): Promise<{accessToken:string,refreshToken:string}>{
         const oldUser:User = await this.userService.getUserByUsername(userRegisterDto.username);
         if(oldUser){
             throw new AppError("User already exists" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
@@ -25,7 +25,11 @@ export class AuthService{
         const user = await this.userService.addUser(userRegisterDto);
 
         const payload = {   id: user.userID , username: user.username , role: user.role , 
-                            profession: user.profession , isBlock3d: user.isBlocked };
-        return this.jwtService.sign(payload);
+                            profession: user.profession , isBlocked: user.isBlocked };
+
+        const accessToken = this.jwtService.sign(payload , {expiresIn: process.env.ACCESS_TOKEN_EXPIRES});
+        const refreshToken = this.jwtService.sign(payload, {expiresIn: process.env.REFRESH_TOKEN_EXPIRES});
+
+        return {accessToken,refreshToken};
     }
 }
