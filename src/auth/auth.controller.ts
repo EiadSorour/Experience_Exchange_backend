@@ -11,8 +11,10 @@ export class AuthController{
     @Post("/register")
     @HttpCode(HttpStatus.OK)
     async register(@Body() userRegisterDto:UserRegisterDto){
-        const token = await this.authService.register(userRegisterDto);
-        return {status: HttpStatusMessage.SUCCESS , data: {token}}
+        const tokens = await this.authService.register(userRegisterDto);
+        const accessToken = tokens.accessToken;
+        const refreshToken = tokens.refreshToken;
+        return {status: HttpStatusMessage.SUCCESS , data: {accessToken,refreshToken}};
     }
 
     @Post("/login")
