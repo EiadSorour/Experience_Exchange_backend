@@ -53,4 +53,12 @@ export class AuthService{
 
         return {accessToken,refreshToken};
     }
+
+    async getAccessToken(payload:any): Promise<string>{
+        const modifiedPayload = {   id: payload.id , username: payload.username , role: payload.role , 
+            profession: payload.profession , isBlocked: payload.isBlocked };
+            
+        const newAccessToken = this.jwtService.sign(modifiedPayload, {expiresIn: process.env.ACCESS_TOKEN_EXPIRES});
+        return newAccessToken;
+    }
 }
