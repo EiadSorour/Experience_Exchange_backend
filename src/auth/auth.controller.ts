@@ -5,6 +5,7 @@ import { HttpStatusMessage } from "src/utils/httpStatusMessage.enum";
 import { UserLoginDto } from "./dto/userLogin.dto";
 import { Response } from "express";
 import { RefreshGuard } from "src/guards/refresh.guard";
+import { AuthGurad } from "src/guards/auth.guard";
 
 @Controller("/api")
 export class AuthController{
@@ -37,6 +38,14 @@ export class AuthController{
         const payload = req.payload;
         const newAccessToken = await this.authService.getAccessToken(payload);
         return ({status: HttpStatusMessage.SUCCESS , data: {newAccessToken}});
+    }
+    
+    @Get("/authenticated")
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AuthGurad)
+    async authenticated(@Req() req:any){
+        const userRole = req.payload.role;
+        return ( {status: HttpStatusMessage.SUCCESS , data: {auth:true , role: userRole}} );
     }
 
 }
