@@ -48,4 +48,11 @@ export class AuthController{
         return ( {status: HttpStatusMessage.SUCCESS , data: {auth:true , role: userRole}} );
     }
 
+    @Get("/logout")
+    @HttpCode(HttpStatus.OK)
+    async logout(@Res() res:Response){
+        res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'strict' });
+        res.send( {status: HttpStatusMessage.SUCCESS , data: {message: "logged out successfully"}} );
+    }
+
 }
