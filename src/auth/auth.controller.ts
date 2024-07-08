@@ -1,9 +1,10 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res} from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards} from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { UserRegisterDto } from "./dto/userRegister.dto";
 import { HttpStatusMessage } from "src/utils/httpStatusMessage.enum";
 import { UserLoginDto } from "./dto/userLogin.dto";
 import { Response } from "express";
+import { AuthGurad } from "src/guards/auth.guard";
 
 @Controller("/api")
 export class AuthController{
@@ -28,4 +29,13 @@ export class AuthController{
         res.cookie("refresh_token" , refreshToken , {httpOnly: true , sameSite:"strict"});
         res.send( {status: HttpStatusMessage.SUCCESS , data: {accessToken}} );
     }
+
+    @Get("/authenticated")
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AuthGurad)
+    async authenticated(@Req() req:any){
+        const userRole = req.payload.role;
+        return ( {status: HttpStatusMessage.SUCCESS , data: {auth:true , role: userRole}} );
+    }
+
 }
