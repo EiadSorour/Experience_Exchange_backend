@@ -14,4 +14,8 @@ export class UserService{
     async getUserByUsername(username:string): Promise<User>{
         return await this.userModel.findOne({where: {username:username}});
     }
+
+    async getAllUsers(limit:number , offset:number): Promise<User[]>{
+        return await this.userModel.findAll({limit:limit , offset:offset});
+    }
 }
