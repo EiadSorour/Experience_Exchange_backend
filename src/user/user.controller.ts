@@ -16,4 +16,21 @@ export class UserController{
         const {rows , count} = await this.userService.getAllUsers(limit,offset);
         return ({status: HttpStatusMessage.SUCCESS , data: {users:rows , count:count}});
     }
+    
+    @Get("/users/id")
+    @HttpCode(HttpStatus.OK) 
+    @UseGuards(AdminGurad)
+    async getUserById(@Query("id") id:string){
+        const user:User = await this.userService.getUserById(id);
+        return ({status: HttpStatusMessage.SUCCESS , data: {user:user} });
+    }
+
+    @Get("/users/username")
+    @HttpCode(HttpStatus.OK) 
+    @UseGuards(AdminGurad)
+    async getUserByUsername(@Query("limit") limit:number , @Query("page") page:number, @Query("username") username:string){
+        const offset = limit*(page-1);
+        const {rows , count} = await this.userService.getUsersByUsername(username, limit , offset);
+        return ({status: HttpStatusMessage.SUCCESS , data: {users:rows , count:count} });
+    }
 }
