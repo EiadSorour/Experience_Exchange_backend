@@ -15,7 +15,7 @@ export class UserService{
         return await this.userModel.findOne({where: {username:username}});
     }
 
-    async getAllUsers(limit:number , offset:number): Promise<User[]>{
-        return await this.userModel.findAll({limit:limit , offset:offset});
+    async getAllUsers(limit:number , offset:number): Promise<{rows:User[], count:number}>{
+        return await this.userModel.findAndCountAll({limit:limit , offset:offset});
     }
 }

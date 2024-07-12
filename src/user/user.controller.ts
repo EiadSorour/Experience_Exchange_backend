@@ -13,7 +13,7 @@ export class UserController{
     @UseGuards(AdminGurad)
     async getAllUsers(@Query("limit") limit:number , @Query("page") page:number){
         const offset = limit*(page-1);
-        const users:User[] = await this.userService.getAllUsers(limit,offset); 
-        return ({status: HttpStatusMessage.SUCCESS , data: {users:users}});
+        const {rows , count} = await this.userService.getAllUsers(limit,offset);
+        return ({status: HttpStatusMessage.SUCCESS , data: {users:rows , count:count}});
     }
 }
