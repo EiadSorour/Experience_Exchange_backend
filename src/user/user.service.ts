@@ -12,6 +12,11 @@ export class UserService{
         return await this.userModel.create(userRegisterDto as any);
     }
 
+    async userBlockUnblock(userID:string): Promise<User>{
+        const user: User = await this.userModel.findOne({where: {userID:userID}});
+        return (await this.userModel.update({ isBlocked: !user.isBlocked }, {where: {userID: userID} , returning:true} ))[1][0];
+    }
+
     async getUserByUsername(username:string): Promise<User>{
         return await this.userModel.findOne({where: {
             username: {[Op.like]: `%${username}%`}
@@ -19,7 +24,7 @@ export class UserService{
     }
 
     async getUsersByUsername(username:string, limit:number , offset:number): Promise<{rows:User[], count:number}>{
-        return await this.userModel.findAndCountAll({limit:limit , offset:offset ,where: {
+        return await this.userModel.findAndCountAll({limit:limit , offset:offset, order:[["username" , "ASC"]] ,where: {
             username: {[Op.like]: `%${username}%`}
         }});
     }
@@ -29,6 +34,6 @@ export class UserService{
     }
 
     async getAllUsers(limit:number , offset:number): Promise<{rows:User[], count:number}>{
-        return await this.userModel.findAndCountAll({limit:limit , offset:offset});
+        return await this.userModel.findAndCountAll({limit:limit , offset:offset , order:[["username" , "ASC"]] });
     }
 }

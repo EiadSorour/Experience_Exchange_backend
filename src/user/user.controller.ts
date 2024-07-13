@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from "@nestjs/common";
+import { Controller, Get, HttpCode, HttpStatus, Patch, Query, UseGuards } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { AdminGurad } from "src/guards/admin.guard";
 import { User } from "./user.model";
@@ -32,5 +32,13 @@ export class UserController{
         const offset = limit*(page-1);
         const {rows , count} = await this.userService.getUsersByUsername(username, limit , offset);
         return ({status: HttpStatusMessage.SUCCESS , data: {users:rows , count:count} });
+    }
+
+    @Patch("/users/block")
+    @HttpCode(HttpStatus.OK) 
+    @UseGuards(AdminGurad)
+    async userBlockUnblock(@Query("id") id:string){
+        const newUser = await this.userService.userBlockUnblock(id);
+        return ({status: HttpStatusMessage.SUCCESS , data: {user:newUser} });
     }
 }
