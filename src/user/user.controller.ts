@@ -41,4 +41,12 @@ export class UserController{
         const newUser = await this.userService.userBlockUnblock(id);
         return ({status: HttpStatusMessage.SUCCESS , data: {user:newUser} });
     }
+
+    @Patch("/users/admin")
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AdminGurad)
+    async userAdminUnadmin(@Query("id") id:string){
+        const newUser = await this.userService.userAdminUnadmin(id);
+        return ({status: HttpStatusMessage.SUCCESS , data: {user:newUser} });
+    }
 }

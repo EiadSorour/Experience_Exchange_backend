@@ -12,6 +12,15 @@ export class UserService{
         return await this.userModel.create(userRegisterDto as any);
     }
 
+    async userAdminUnadmin(userID:string): Promise<User>{
+        const user: User = await this.userModel.findOne({where: {userID:userID}});
+        if(user.role === "admin"){
+            return (await this.userModel.update({ role: "client" }, {where: {userID: userID} , returning:true} ))[1][0];
+        }else{
+            return (await this.userModel.update({ role: "admin" }, {where: {userID: userID} , returning:true} ))[1][0];
+        }
+    }
+
     async userBlockUnblock(userID:string): Promise<User>{
         const user: User = await this.userModel.findOne({where: {userID:userID}});
         return (await this.userModel.update({ isBlocked: !user.isBlocked }, {where: {userID: userID} , returning:true} ))[1][0];
