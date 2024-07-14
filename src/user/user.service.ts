@@ -12,6 +12,10 @@ export class UserService{
         return await this.userModel.create(userRegisterDto as any);
     }
 
+    async deleteUser(userID:string): Promise<void>{
+        await this.userModel.destroy({where: {userID:userID}});
+    }
+
     async userAdminUnadmin(userID:string): Promise<User>{
         const user: User = await this.userModel.findOne({where: {userID:userID}});
         if(user.role === "admin"){

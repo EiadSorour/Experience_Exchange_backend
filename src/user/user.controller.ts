@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Patch, Query, UseGuards } from "@nestjs/common";
+import { Controller, Delete, Get, HttpCode, HttpStatus, Patch, Query, UseGuards } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { AdminGurad } from "src/guards/admin.guard";
 import { User } from "./user.model";
@@ -48,5 +48,13 @@ export class UserController{
     async userAdminUnadmin(@Query("id") id:string){
         const newUser = await this.userService.userAdminUnadmin(id);
         return ({status: HttpStatusMessage.SUCCESS , data: {user:newUser} });
+    }
+
+    @Delete("/users")
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(AdminGurad)
+    async deleteUser(@Query("id") id:string){
+        await this.userService.deleteUser(id);
+        return ({status: HttpStatusMessage.SUCCESS , data: {message:"Deleted Successfully"} });
     }
 }
