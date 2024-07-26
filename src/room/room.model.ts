@@ -17,7 +17,7 @@ export class Room extends Model {
     @BelongsTo(()=>User)
     creator: User;
 
-    @BelongsToMany(()=>Room , { through: {model: ()=>UserRoom,  unique: true } })
+    @BelongsToMany(()=>Room , { through: {model: ()=>UserRoom,  unique: false } })
     usersJoined: User[];
 
     @DeletedAt
