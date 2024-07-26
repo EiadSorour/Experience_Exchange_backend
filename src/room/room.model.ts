@@ -1,4 +1,4 @@
-import { BelongsTo, BelongsToMany, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
+import { BelongsTo, BelongsToMany, Column, DataType, DeletedAt, ForeignKey, Model, Table } from 'sequelize-typescript';
 import { User } from 'src/user/user.model';
 import { UserRoom } from 'src/user_room/userRoom.model';
 
@@ -19,4 +19,10 @@ export class Room extends Model {
 
     @BelongsToMany(()=>Room , { through: {model: ()=>UserRoom,  unique: true } })
     usersJoined: User[];
+
+    @DeletedAt
+    deletedAt: any;
+
+    paranoid:true;
+    timestamps:true;
 }

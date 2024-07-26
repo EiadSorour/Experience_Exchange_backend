@@ -1,4 +1,4 @@
-import { Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, DeletedAt, ForeignKey, Model, Table } from 'sequelize-typescript';
 import { Room } from 'src/room/room.model';
 import { User } from 'src/user/user.model';
 
@@ -14,4 +14,10 @@ export class UserRoom extends Model {
     @Column({type: DataType.UUID})
     @ForeignKey(()=>Room)
     roomID: String;
+
+    @DeletedAt
+    deletedAt: any;
+
+    paranoid:true;
+    timestamps:true;
 }
