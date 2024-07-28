@@ -15,6 +15,10 @@ export class RoomService{
         return await this.roomModel.findAndCountAll({limit:limit , offset:offset , order:[["topic" , "ASC"]] });
     }
 
+    async getRoomByID(id:string): Promise<Room>{
+        return await this.roomModel.findOne({where: {roomID:id}});
+    }
+
     async getAllRoomsByCreatorID(creatorID: string, limit:number , offset:number): Promise<{rows:Room[], count:number}>{
         return await this.roomModel.findAndCountAll({where:{creatorID:creatorID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
     }
