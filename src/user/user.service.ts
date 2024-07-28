@@ -36,6 +36,10 @@ export class UserService{
         }});
     }
 
+    async getUserByExactUsername(username:string): Promise<User>{
+        return await this.userModel.findOne( {where: {username: username}} );
+    }
+
     async getUsersByUsername(username:string, limit:number , offset:number): Promise<{rows:User[], count:number}>{
         return await this.userModel.findAndCountAll({limit:limit , offset:offset, order:[["username" , "ASC"]] ,where: {
             username: {[Op.like]: `%${username}%`}
