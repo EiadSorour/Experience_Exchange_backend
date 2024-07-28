@@ -3,6 +3,7 @@ import { InjectModel } from "@nestjs/sequelize";
 import { Room } from "./room.model";
 import { UserService } from "src/user/user.service";
 import { User } from "src/user/user.model";
+import { Op } from "sequelize";
 
 @Injectable()
 export class RoomService{
@@ -24,7 +25,7 @@ export class RoomService{
     }
     
     async getAllRoomsByTopic(topic: string, limit:number , offset:number): Promise<{rows:Room[], count:number}>{
-        return await this.roomModel.findAndCountAll({where:{topic:topic},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+        return await this.roomModel.findAndCountAll({where:{topic:{[Op.iLike]: `%${topic}%`}},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
     }
     
     async getAllRoomsByUsername(username: string, limit:number , offset:number): Promise<{rows:Room[], count:number}>{
@@ -32,8 +33,7 @@ export class RoomService{
         if(!user){
             return {rows:[] , count:0};
         }else{
-            return await this.roomModel.findAndCountAll({where:{creatorID:user.id},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+            return await this.roomModel.findAndCountAll({where:{creatorID:user.dataValues.userID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
         }
     }
-
 }
