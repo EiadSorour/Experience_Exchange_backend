@@ -12,28 +12,60 @@ export class RoomService{
         private readonly userService:UserService
     ){}
 
-    async getAllRooms(limit:number , offset:number): Promise<{rows:Room[], count:number}>{
-        return await this.roomModel.findAndCountAll({limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+    async modifyRows(rows:any){
+        var newRows = [];
+        var dataValues = [];
+        var usernames = [];
+
+        for(const row of rows){
+            var user = await this.userService.getUserById(row.dataValues.creatorID);
+            usernames.push(user.username);
+        }
+
+        newRows = rows.map((row,index)=>{
+            return {...row, dataValues:{...row.dataValues , creatorUsername:usernames[index]}}
+        })
+
+        newRows.forEach(newRow => {
+            dataValues.push(newRow.dataValues);
+        });
+
+        return dataValues;
     }
 
-    async getRoomByID(id:string): Promise<Room>{
-        return await this.roomModel.findOne({where: {roomID:id}});
+    async getAllRooms(limit:number , offset:number): Promise<any>{
+        const {rows , count} = await this.roomModel.findAndCountAll({limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+        const modifiedRows = await this.modifyRows(rows);
+        return {rows:modifiedRows ,count};
     }
 
-    async getAllRoomsByCreatorID(creatorID: string, limit:number , offset:number): Promise<{rows:Room[], count:number}>{
-        return await this.roomModel.findAndCountAll({where:{creatorID:creatorID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+    async getRoomByID(id:string): Promise<any>{
+        const room = await this.roomModel.findOne({where: {roomID:id}});
+        const creatorUsername = (await this.userService.getUserById(room.creatorID)).username;
+        var newRoom = {...room , dataValues:{...room.dataValues , creatorUsername:creatorUsername}};
+        return newRoom;
+    }
+
+    async getAllRoomsByCreatorID(creatorID: string, limit:number , offset:number): Promise<any>{
+        const {rows , count} = await this.roomModel.findAndCountAll({where:{creatorID:creatorID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+        const modifiedRows = await this.modifyRows(rows);
+        return {rows:modifiedRows ,count};
     }
     
-    async getAllRoomsByTopic(topic: string, limit:number , offset:number): Promise<{rows:Room[], count:number}>{
-        return await this.roomModel.findAndCountAll({where:{topic:{[Op.iLike]: `%${topic}%`}},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+    async getAllRoomsByTopic(topic: string, limit:number , offset:number): Promise<any>{
+        const {rows , count} = await this.roomModel.findAndCountAll({where:{topic:{[Op.iLike]: `%${topic}%`}},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+        const modifiedRows = await this.modifyRows(rows);
+        return {rows:modifiedRows ,count};
     }
     
-    async getAllRoomsByUsername(username: string, limit:number , offset:number): Promise<{rows:Room[], count:number}>{
+    async getAllRoomsByUsername(username: string, limit:number , offset:number): Promise<any>{
         const user:User = await this.userService.getUserByExactUsername(username);
         if(!user){
             return {rows:[] , count:0};
         }else{
-            return await this.roomModel.findAndCountAll({where:{creatorID:user.dataValues.userID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+            const {rows , count} = await this.roomModel.findAndCountAll({where:{creatorID:user.dataValues.userID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
+            const modifiedRows = await this.modifyRows(rows);
+            return {rows:modifiedRows ,count};
         }
     }
 }
