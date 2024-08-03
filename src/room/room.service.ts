@@ -43,7 +43,7 @@ export class RoomService{
         const room = await this.roomModel.findOne({where: {roomID:id}});
         const creatorUsername = (await this.userService.getUserById(room.creatorID)).username;
         var newRoom = {...room , dataValues:{...room.dataValues , creatorUsername:creatorUsername}};
-        return newRoom;
+        return newRoom.dataValues;
     }
 
     async getAllRoomsByCreatorID(creatorID: string, limit:number , offset:number): Promise<any>{
