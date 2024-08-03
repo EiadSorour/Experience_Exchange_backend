@@ -48,6 +48,10 @@ export class RoomService{
         }
 
         const room = await this.roomModel.findOne({where: {roomID:id}});
+        if(!room){
+            return [];
+        }
+
         const creatorUsername = (await this.userService.getUserById(room.creatorID)).username;
         var newRoom = {...room , dataValues:{...room.dataValues , creatorUsername:creatorUsername}};
         return newRoom.dataValues;
