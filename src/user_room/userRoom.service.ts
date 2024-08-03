@@ -1,7 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { UserRoom } from "./userRoom.model";
 import { UserService } from "src/user/user.service";
+import {validate} from "uuid";
+import { AppError } from "src/utils/app.Error";
+import { HttpStatusMessage } from "src/utils/httpStatusMessage.enum";
 
 @Injectable()
 export class UserRoomService{
@@ -11,6 +14,10 @@ export class UserRoomService{
     ){}
 
     async getAllRoomUsers(roomID:string){
+        if(!validate(roomID)){
+            throw new AppError("Invalid UUID" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
+        }
+
         const userRooms:UserRoom[] = await this.userRoomModel.findAll({where: {roomID:roomID}});
         const userIDs = [];
         const usernames = [];

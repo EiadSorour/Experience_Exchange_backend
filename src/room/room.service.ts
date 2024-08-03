@@ -1,9 +1,12 @@
-import { Injectable } from "@nestjs/common";
+import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Room } from "./room.model";
 import { UserService } from "src/user/user.service";
 import { User } from "src/user/user.model";
 import { Op } from "sequelize";
+import {validate} from "uuid";
+import { AppError } from "src/utils/app.Error";
+import { HttpStatusMessage } from "src/utils/httpStatusMessage.enum";
 
 @Injectable()
 export class RoomService{
@@ -40,6 +43,10 @@ export class RoomService{
     }
 
     async getRoomByID(id:string): Promise<any>{
+        if(!validate(id)){
+            throw new AppError("Invalid UUID" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
+        }
+
         const room = await this.roomModel.findOne({where: {roomID:id}});
         const creatorUsername = (await this.userService.getUserById(room.creatorID)).username;
         var newRoom = {...room , dataValues:{...room.dataValues , creatorUsername:creatorUsername}};
@@ -47,6 +54,10 @@ export class RoomService{
     }
 
     async getAllRoomsByCreatorID(creatorID: string, limit:number , offset:number): Promise<any>{
+        if(!validate(creatorID)){
+            throw new AppError("Invalid UUID" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
+        }
+
         const {rows , count} = await this.roomModel.findAndCountAll({where:{creatorID:creatorID},limit:limit , offset:offset , order:[["topic" , "ASC"]] });
         const modifiedRows = await this.modifyRows(rows);
         return {rows:modifiedRows ,count};
