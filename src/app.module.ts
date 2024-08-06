@@ -10,11 +10,15 @@ import { AuthModule } from './auth/auth.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.production',
+      envFilePath: '.env.development',
     }),
     SequelizeModule.forRoot({
-      dialect: process.env.DIALECT as any,
-      uri: process.env.DATABASE_URI,
+      dialect: process.env.DIALECT_USERNAME as any,
+      host: process.env.HOST,
+      port: process.env.PORT as any,
+      username: process.env.DIALECT_USERNAME,
+      password: process.env.PASSWORD,
+      database: process.env.DATABASE,
       autoLoadModels: true,
       synchronize: true
     }),
