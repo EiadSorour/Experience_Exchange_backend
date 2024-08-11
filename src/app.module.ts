@@ -5,6 +5,7 @@ import { UserModule } from './user/user.module';
 import { RoomModule } from './room/room.module';
 import { UserRoomModule } from './user_room/userRoom.module';
 import { AuthModule } from './auth/auth.module';
+import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { AuthModule } from './auth/auth.module';
       autoLoadModels: true,
       synchronize: true
     }),
-    RoomModule, UserModule ,UserRoomModule, AuthModule
+    RoomModule, UserModule ,UserRoomModule, AuthModule, WebsocketModule
   ],
   controllers: [],
   providers: [],
