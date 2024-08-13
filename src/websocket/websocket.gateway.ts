@@ -4,16 +4,46 @@ import { Socket, Server } from "socket.io";
 import { SocketGuard } from "src/guards/socket.guard";
 
 var availableRooms = [
-    // {
-    //     topic: "art",
-    //     creatorUsername: "eiad sorour",
-    //     creatorProf: "ai engineer"
-    // },
-    // {
-    //     topic: "Learning",
-    //     creatorUsername: "Amir ahmed",
-    //     creatorProf: "doctor"
-    // },
+    {
+        topic: "art",
+        creatorUsername: "eiad sorour",
+        creatorProf: "ai engineer"
+    },
+    {
+        topic: "learning",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
+    {
+        topic: "sports",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
+    {
+        topic: "engineering",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
+    {
+        topic: "computer science",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
+    {
+        topic: "cartoon",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
+    {
+        topic: "teaching",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
+    {
+        topic: "books",
+        creatorUsername: "Amir ahmed",
+        creatorProf: "doctor"
+    },
 ];
 
 @UseGuards(SocketGuard) 
@@ -43,6 +73,12 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     @SubscribeMessage("getAllRooms")
     async getAllRooms(@ConnectedSocket() client: Socket){
         client.emit("ReceivedRooms" , availableRooms);
+    }
+
+    @SubscribeMessage("getTopic")
+    async getRoomsByTopic(@MessageBody() topic:string , @ConnectedSocket() client: Socket){
+        const rooms = availableRooms.filter((room)=>{ return room.topic.includes(topic.toLowerCase()) });
+        client.emit("ReceivedRooms" , rooms);
     }
 
     // @SubscribeMessage("sendMessage")
