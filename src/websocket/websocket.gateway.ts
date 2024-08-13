@@ -1,7 +1,20 @@
 import { UseGuards } from "@nestjs/common";
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Socket, Server } from "socket.io";
 import { SocketGuard } from "src/guards/socket.guard";
+
+var availableRooms = [
+    // {
+    //     topic: "art",
+    //     creatorUsername: "eiad sorour",
+    //     creatorProf: "ai engineer"
+    // },
+    // {
+    //     topic: "Learning",
+    //     creatorUsername: "Amir ahmed",
+    //     creatorProf: "doctor"
+    // },
+];
 
 @UseGuards(SocketGuard) 
 @WebSocketGateway(80 , {
@@ -25,6 +38,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     }
 
     handleDisconnect(client:Socket) {
+    }
+
+    @SubscribeMessage("getAllRooms")
+    async getAllRooms(@ConnectedSocket() client: Socket){
+        client.emit("ReceivedRooms" , availableRooms);
     }
 
     // @SubscribeMessage("sendMessage")

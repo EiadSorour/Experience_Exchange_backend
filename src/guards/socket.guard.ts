@@ -11,7 +11,7 @@ export class SocketGuard implements CanActivate {
         const request = context.switchToHttp().getRequest();
         
         try{
-			const accessToken = request.cookies.access_token;
+			const accessToken = request.handshake.headers['authorization'].split(" ")[1];
             const payload = this.jwtService.verify(accessToken);
             request.data.payload = payload;
         }catch(error){
