@@ -7,42 +7,74 @@ var availableRooms = [
     {
         topic: "art",
         creatorUsername: "eiad sorour",
-        creatorProf: "ai engineer"
+        creatorProf: "ai engineer",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "learning",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "sports",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "engineering",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "computer science",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "cartoon",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "teaching",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
     {
         topic: "books",
         creatorUsername: "Amir ahmed",
-        creatorProf: "doctor"
+        creatorProf: "doctor",
+        offer: "",
+        offerIce: [],
+        answer: "",
+        answerIce: []
     },
 ];
 
@@ -79,6 +111,31 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     async getRoomsByTopic(@MessageBody() topic:string , @ConnectedSocket() client: Socket){
         const rooms = availableRooms.filter((room)=>{ return room.topic.includes(topic.toLowerCase()) });
         client.emit("ReceivedRooms" , rooms);
+    }
+
+    @SubscribeMessage("new_offer")
+    async createOffer(@MessageBody() newOffer:any , @ConnectedSocket() client: Socket){
+        const {offer , topic , creatorUsername, creatorProf} = newOffer;
+        availableRooms.unshift({
+            topic: topic,
+            creatorUsername: creatorUsername,
+            creatorProf: creatorProf,
+            offer: offer,
+            offerIce: [],
+            answer: "",
+            answerIce: []  
+        });
+        client.broadcast.emit("ReceivedRooms" , availableRooms);  
+    } 
+    
+    @SubscribeMessage("send_ice_candidate_to_server")
+    async setIceCandidates(@MessageBody() body , @ConnectedSocket() client: Socket){
+        const {isOffer , candidate , creatorUsername} = body;
+        if(isOffer){
+            availableRooms.find((offer)=>offer.creatorUsername == creatorUsername).offerIce.push(candidate);
+        }else{
+            // handle answer candidates
+        }
     }
 
     // @SubscribeMessage("sendMessage")
