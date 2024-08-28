@@ -8,73 +8,13 @@ var availableRooms = [
         topic: "art",
         creatorUsername: "eiad sorour",
         creatorProf: "ai engineer",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
+        connectedSockets: [],
     },
     {
-        topic: "learning",
-        creatorUsername: "Amir ahmed",
+        topic: "science",
+        creatorUsername: "adham tarek",
         creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
-    },
-    {
-        topic: "sports",
-        creatorUsername: "Amir ahmed",
-        creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
-    },
-    {
-        topic: "engineering",
-        creatorUsername: "Amir ahmed",
-        creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
-    },
-    {
-        topic: "computer science",
-        creatorUsername: "Amir ahmed",
-        creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
-    },
-    {
-        topic: "cartoon",
-        creatorUsername: "Amir ahmed",
-        creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
-    },
-    {
-        topic: "teaching",
-        creatorUsername: "Amir ahmed",
-        creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
-    },
-    {
-        topic: "books",
-        creatorUsername: "Amir ahmed",
-        creatorProf: "doctor",
-        offer: "",
-        offerIce: [],
-        answer: "",
-        answerIce: []
+        connectedSockets: []
     },
 ];
 
@@ -89,7 +29,7 @@ var availableRooms = [
 })
 
 export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect{
-    @WebSocketServer()
+    @WebSocketServer() 
     server: Server
 
     afterInit(server:Server){ 
@@ -113,42 +53,65 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         client.emit("ReceivedRooms" , rooms);
     }
 
-    @SubscribeMessage("new_offer")
-    async createOffer(@MessageBody() newOffer:any , @ConnectedSocket() client: Socket){
-        const {offer , topic , creatorUsername, creatorProf} = newOffer;
+    @SubscribeMessage("roomCreated")
+    async createRoom(@MessageBody() body:any , @ConnectedSocket() client: Socket){
+        const {topic, creatorUsername , creatorProf} = body;
+        const creatorSocket = client.id;
         availableRooms.unshift({
             topic: topic,
             creatorUsername: creatorUsername,
             creatorProf: creatorProf,
-            offer: offer,
-            offerIce: [],
-            answer: "",
-            answerIce: []  
+            connectedSockets: [creatorSocket]
         });
-        client.broadcast.emit("ReceivedRooms" , availableRooms);  
-    } 
-    
-    @SubscribeMessage("send_ice_candidate_to_server")
-    async setIceCandidates(@MessageBody() body , @ConnectedSocket() client: Socket){
-        const {isOffer , candidate , creatorUsername} = body;
+
+        client.broadcast.emit("ReceivedRooms" , availableRooms);
+    }
+
+    @SubscribeMessage("askToJoin")
+    async askToJoin(@MessageBody() body:any , @ConnectedSocket() client: Socket){
+        const {creatorUsername, clientUsername} = body;
+        const wantedRoom = availableRooms.find((room)=>room.creatorUsername == creatorUsername);
+        const connectedSockets = wantedRoom.connectedSockets;
+
+        connectedSockets.forEach((socket)=>{
+            this.server.to(socket).emit("newUserJoin", {
+                clientUsername: clientUsername,
+                userSocket: client.id
+            });
+        })
+    }
+
+    @SubscribeMessage("sendCandidateToServer")
+    async sendCandidate(@MessageBody() body:any , @ConnectedSocket() client: Socket){
+        const { candidate, isOffer, toSocket, fromUser } = body;
         if(isOffer){
-            availableRooms.find((offer)=>offer.creatorUsername == creatorUsername).offerIce.push(candidate);
+            this.server.to(toSocket).emit("offerIceRecieved", {candidate ,fromUser});
         }else{
-            // handle answer candidates
+            this.server.to(toSocket).emit("answerIceRecieved" , {candidate, fromUser});
         }
     }
 
-    // @SubscribeMessage("sendMessage")
-    // async handleNewMessage(@MessageBody() messageBody:SendMessageDto , @ConnectedSocket() client: Socket){
-    //     const chatID = String(messageBody.chatID);
-    //     const messageText = messageBody.message;
-    //     const username = client.data.payload.username;
-    //     const message = {
-    //         senderUsername: username,
-    //         text: messageText,
-    //         chatID: chatID
-    //     }
-    //     await this.eventsService.saveMessage(message as any);
-    //     client.to(chatID).emit("newMessage" , messageText);
-    // }
+    @SubscribeMessage("joinAccepted")
+    async joinAccepted(@MessageBody() body:any , @ConnectedSocket() client: Socket){
+        const {offer,toSocket,clientUsername} = body;
+
+        this.server.to(toSocket).emit("getAnswer", {
+            offer: offer,
+            fromSocket: client.id,
+            fromClientUsername: clientUsername
+        });
+    }
+
+    @SubscribeMessage("sendAnswer")
+    async sendAnswer(@MessageBody() body:any , @ConnectedSocket() client: Socket){
+        const {answer,toSocket,creatorUsername,clientUsername} = body;
+        
+        const room = availableRooms.find((room)=>room.creatorUsername == creatorUsername);
+        room.connectedSockets.push(client.id);
+
+        this.server.to(toSocket).emit("answerRecieved", {
+            answer,
+            clientUsername
+        });
+    }
 }
