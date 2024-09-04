@@ -104,10 +104,14 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
     @SubscribeMessage("sendAnswer")
     async sendAnswer(@MessageBody() body:any , @ConnectedSocket() client: Socket){
+        
         const {answer,toSocket,creatorUsername,clientUsername} = body;
         
         const room = availableRooms.find((room)=>room.creatorUsername == creatorUsername);
-        room.connectedSockets.push(client.id);
+        if(!room.connectedSockets.includes(client.id)){
+            room.connectedSockets.push(client.id);
+            console.log(room.connectedSockets);
+        }
 
         this.server.to(toSocket).emit("answerRecieved", {
             answer,
