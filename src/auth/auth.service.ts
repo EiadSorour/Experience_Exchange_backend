@@ -45,6 +45,10 @@ export class AuthService{
             throw new AppError("Incorrect password" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
         }
 
+        if(user.isBlocked){
+            throw new AppError("User is blocked, Contact admins" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
+        }
+
         const payload = {   id: user.userID , username: user.username , role: user.role , 
             profession: user.profession , isBlocked: user.isBlocked };
 

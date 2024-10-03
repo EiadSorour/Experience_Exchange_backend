@@ -4,9 +4,20 @@ import { AppExceptionFilter } from './utils/app.ExceptionFilter';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+// import * as fs from 'fs';
+
 
 async function bootstrap() {
+
+  // const httpsOptions = {
+  //   key: fs.readFileSync('./src/cert/cert.key'),
+  //   cert: fs.readFileSync('./src/cert/cert.crt'),
+  // };
+
+  // const app = await NestFactory.create(AppModule, { httpsOptions });
+
   const app = await NestFactory.create(AppModule);
+
   app.useGlobalFilters(new AppExceptionFilter());
   app.useGlobalPipes(new ValidationPipe({whitelist:true}));
   app.use(cookieParser());

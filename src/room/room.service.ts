@@ -36,6 +36,10 @@ export class RoomService{
         return dataValues;
     }
 
+    async addRoom(roomID: string , topic: string , creatorID:string): Promise<void>{
+        await this.roomModel.create({roomID , topic , creatorID});
+    }
+
     async getAllRooms(limit:number , offset:number): Promise<any>{
         const {rows , count} = await this.roomModel.findAndCountAll({limit:limit , offset:offset , order:[["topic" , "ASC"]] });
         const modifiedRows = await this.modifyRows(rows);

@@ -25,7 +25,7 @@ export class UserRoomService{
 
         userRooms.forEach(userRoom => {
             userIDs.push(userRoom.dataValues.userID);
-        });
+        }); 
 
         for(const userID of userIDs){
             const user = await this.userService.getUserById(userID);
@@ -37,5 +37,9 @@ export class UserRoomService{
         }
 
         return users;
+    }
+
+    async addUserRoom(userID:string , roomID:string): Promise<void>{
+        await this.userRoomModel.create({userID , roomID});
     }
 }

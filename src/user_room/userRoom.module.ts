@@ -12,6 +12,6 @@ import { UserModule } from "src/user/user.module";
     ],
     controllers: [UserRoomController],
     providers: [UserRoomService],
-    exports: []
+    exports: [UserRoomService]
 })
 export class UserRoomModule{}
