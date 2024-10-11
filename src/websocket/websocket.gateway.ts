@@ -12,8 +12,10 @@ import {
     parseScalabilityMode
 } from "mediasoup";
 import { WebsocketService } from "./websocket.service";
+import { v4 as uuidv4 } from 'uuid';
 
-var availableRooms = {};
+var videoRooms = {};
+var chatRooms = {};
 var inRoomUsers = {};
 var waitingUsers = {};
 
@@ -57,24 +59,40 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         console.log(`Client ${client.id} is disconnected`);
     }
 
-    @SubscribeMessage("getAllRooms")
-    async getAllRooms(@ConnectedSocket() client: Socket) {
-        client.emit("ReceivedRooms", availableRooms);
+    @SubscribeMessage("getVideoRooms")
+    async getVideoRooms(@ConnectedSocket() client: Socket) {
+        client.emit("VideoRooms", videoRooms);
     }
 
-    @SubscribeMessage("getTopic")
-    async getRoomsByTopic(@MessageBody() topic: string, @ConnectedSocket() client: Socket) {
+    @SubscribeMessage("getChatRooms")
+    async getChatRooms(@ConnectedSocket() client: Socket) {
+        client.emit("ChatRooms", chatRooms);
+    }
+
+    @SubscribeMessage("getVideoTopics")
+    async getVideoRoomsByTopic(@MessageBody() topic: string, @ConnectedSocket() client: Socket) {
         const rooms = {};
-        for (let key in availableRooms) {
-            if (availableRooms[key].topic.toLowerCase().includes(topic.toLowerCase())) {
-                rooms[key] = availableRooms[key];
+        for (let key in videoRooms) {
+            if (videoRooms[key].topic.toLowerCase().includes(topic.toLowerCase())) {
+                rooms[key] = videoRooms[key];
             }
         }
-        client.emit("ReceivedRooms", rooms);
+        client.emit("VideoRooms", rooms);
     }
 
-    @SubscribeMessage("createRoom")
-    async createRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+    @SubscribeMessage("getChatTopics")
+    async getChatRoomsByTopic(@MessageBody() topic: string, @ConnectedSocket() client: Socket) {
+        const rooms = {};
+        for (let key in chatRooms) {
+            if (chatRooms[key].topic.toLowerCase().includes(topic.toLowerCase())) {
+                rooms[key] = chatRooms[key];
+            }
+        }
+        client.emit("ChatRooms", rooms);
+    }
+
+    @SubscribeMessage("createVideoRoom")
+    async createVideoRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const { topic, creatorUsername, creatorProf } = body;
 
         const newRouter:types.Router = await this.worker.createRouter({
@@ -94,7 +112,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
             ],
         });
 
-        availableRooms = {
+        videoRooms = {
             [newRouter.id]: {
                 topic: topic,
                 creatorProf: creatorProf,
@@ -102,27 +120,48 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
                 router: newRouter,
                 transports: {}
             },
-            ...availableRooms,
+            ...videoRooms,
         }
 
         // Save room to database
         await this.webSocketService.saveNewRoom( newRouter.id , topic , creatorUsername);
 
-        client.broadcast.emit("ReceivedRooms" , availableRooms);
+        client.broadcast.emit("VideoRooms" , videoRooms);
 
-        client.emit("gotRoomID" , {roomID: newRouter.id});
+        client.emit("gotRoomID" , {roomID: newRouter.id, roomType: "Video"});
+    }
+
+    @SubscribeMessage("createChatRoom")
+    async createChatRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+        const { topic, creatorUsername, creatorProf } = body;
+
+        const roomID = uuidv4();
+
+        chatRooms = {
+            [roomID]: {
+                topic: topic,
+                creatorProf: creatorProf,
+                creatorUsername: creatorUsername,
+            },
+            ...chatRooms,
+        }
+
+        // Save room to database
+        await this.webSocketService.saveNewRoom( roomID , topic , creatorUsername);
+        client.broadcast.emit("ChatRooms" , chatRooms);
+        client.emit("gotRoomID" , {roomID: roomID, roomType: "Chat"});
     }
 
     @SubscribeMessage("createProducerTransport")
     async createProducerTransport(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const { roomID, username } = body;
 
-        if(!availableRooms[`${roomID}`]){
+        if(!videoRooms[`${roomID}`]){
             client.emit("roomEnded");
             return;
         }
 
-        if(username !== availableRooms[`${roomID}`].creatorUsername){
+        if(username !== videoRooms[`${roomID}`].creatorUsername){
             if(!waitingUsers[`${roomID}`] || !waitingUsers[`${roomID}`][`${username}`] || !waitingUsers[`${roomID}`][`${username}`]['accepted']){
                 client.emit("mustWait");
                 return;
@@ -133,7 +172,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         
         this.server.to(`${roomID}`).emit("newMember" , {username: username, id: client.id});
 
-        const transport = await availableRooms[`${roomID}`].router.createWebRtcTransport({
+        const transport = await videoRooms[`${roomID}`].router.createWebRtcTransport({
             listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
             enableUdp: true,
             enableTcp: true,
@@ -141,18 +180,18 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         });
 
 
-        availableRooms[`${roomID}`].transports[`${username}`] = {
+        videoRooms[`${roomID}`].transports[`${username}`] = {
             producers: {}, 
             consumers: {}, 
         };
         
-        availableRooms[`${roomID}`].transports[`${username}`].producerTransport = transport;
+        videoRooms[`${roomID}`].transports[`${username}`].producerTransport = transport;
 
-        availableRooms[`${roomID}`].transports[`${username}`].producerTransport.on("icestatechange", (iceState) =>{
+        videoRooms[`${roomID}`].transports[`${username}`].producerTransport.on("icestatechange", (iceState) =>{
             if(iceState === "disconnected"){
                 delete waitingUsers[`${roomID}`][`${username}`]; 
                 delete inRoomUsers[`${roomID}`][`${username}`];
-                delete availableRooms[`${roomID}`].transports[`${username}`];
+                delete videoRooms[`${roomID}`].transports[`${username}`];
                 this.server.to(`${roomID}`).emit("producerDisconnected", {producerUsername: username});
             } 
         });
@@ -162,7 +201,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
             iceParameters: transport.iceParameters,
             iceCandidates: transport.iceCandidates,
             dtlsParameters: transport.dtlsParameters,
-            rtpCapabilities: availableRooms[`${roomID}`].router.rtpCapabilities,
+            rtpCapabilities: videoRooms[`${roomID}`].router.rtpCapabilities,
             roomID: roomID
         });
 
@@ -173,7 +212,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     @SubscribeMessage("connectProducerTransport")
     async connectProducerTransport(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const {dtlsParameters , roomID, username} = body;
-        const transport = availableRooms[`${roomID}`].transports[`${username}`].producerTransport;
+        const transport = videoRooms[`${roomID}`].transports[`${username}`].producerTransport;
 
         await transport.connect({ dtlsParameters });
     }
@@ -183,11 +222,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
         const {roomID, username, kind, rtpParameters} = body;
 
-        const transport = availableRooms[`${roomID}`].transports[`${username}`].producerTransport;
+        const transport = videoRooms[`${roomID}`].transports[`${username}`].producerTransport;
         const producer = await transport.produce({ kind, rtpParameters });
 
         // Store producer by clientId-kind (audio/video)
-        availableRooms[`${roomID}`].transports[`${username}`].producers[`${kind}`] = producer;
+        videoRooms[`${roomID}`].transports[`${username}`].producers[`${kind}`] = producer;
 
         client.broadcast.to(`${roomID}`).emit("newProducer", {
             username: username,
@@ -200,26 +239,26 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     async createConsumerTransport(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const { roomID, username } = body;
 
-        if(!availableRooms[`${roomID}`]){
+        if(!videoRooms[`${roomID}`]){
             client.emit("roomEnded");
             return;
         }
 
-        const transport = await availableRooms[`${roomID}`].router.createWebRtcTransport({
+        const transport = await videoRooms[`${roomID}`].router.createWebRtcTransport({
             listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
             enableUdp: true,
             enableTcp: true,
             preferUdp: true,
         });
 
-        availableRooms[`${roomID}`].transports[`${username}`].receiverTransport = transport;
+        videoRooms[`${roomID}`].transports[`${username}`].receiverTransport = transport;
 
         client.emit("receiverTransportCreated", {
             id: transport.id,
             iceParameters: transport.iceParameters,
             iceCandidates: transport.iceCandidates,
             dtlsParameters: transport.dtlsParameters,
-            rtpCapabilities: availableRooms[`${roomID}`].router.rtpCapabilities,
+            rtpCapabilities: videoRooms[`${roomID}`].router.rtpCapabilities,
             roomID: roomID
         });
 
@@ -229,7 +268,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     async connectConsumerTransport(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const { dtlsParameters , roomID, username } = body;
         
-        const transport = availableRooms[`${roomID}`].transports[`${username}`].receiverTransport;
+        const transport = videoRooms[`${roomID}`].transports[`${username}`].receiverTransport;
         await transport.connect({ dtlsParameters });
         
     }
@@ -238,10 +277,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     async createConsumer(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const { username,roomID,producerUsername,rtpCapabilities,kind,producerID } = body;
 
-        const producer = availableRooms[`${roomID}`].transports[`${producerUsername}`].producers[`${kind}`];
-        const transport = availableRooms[`${roomID}`].transports[`${username}`].receiverTransport;
+        const producer = videoRooms[`${roomID}`].transports[`${producerUsername}`].producers[`${kind}`];
+        const transport = videoRooms[`${roomID}`].transports[`${username}`].receiverTransport;
 
-        if (!producer || !availableRooms[`${roomID}`].router.canConsume({ producerId: producerID, rtpCapabilities:rtpCapabilities })) {
+        if (!producer || !videoRooms[`${roomID}`].router.canConsume({ producerId: producerID, rtpCapabilities:rtpCapabilities })) {
             return;
         }
 
@@ -251,7 +290,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
             paused: false,
         });
 
-        availableRooms[`${roomID}`].transports[`${username}`].consumers[`${producerUsername}-${kind}`] = consumer;
+        videoRooms[`${roomID}`].transports[`${username}`].consumers[`${producerUsername}-${kind}`] = consumer;
 
         client.emit("newConsumer", {
             consumerId: consumer.id,
@@ -267,25 +306,25 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     async newUserJoined(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const { username,roomID,rtpCapabilities} = body;
 
-        const roomTransports = availableRooms[`${roomID}`].transports;
+        const roomTransports = videoRooms[`${roomID}`].transports;
 
-        const transport = availableRooms[`${roomID}`].transports[`${username}`].receiverTransport;
+        const transport = videoRooms[`${roomID}`].transports[`${username}`].receiverTransport;
         
         Object.keys(roomTransports).forEach((user)=>{
             
             /////////
-            if(!availableRooms[`${roomID}`].transports[user].producers){
-                availableRooms[`${roomID}`].transports[user].producers = {};
+            if(!videoRooms[`${roomID}`].transports[user].producers){
+                videoRooms[`${roomID}`].transports[user].producers = {};
             }
             ////////
             
             if(username != user){
 
-                Object.keys(availableRooms[`${roomID}`].transports[user].producers).forEach(async(kind)=>{
+                Object.keys(videoRooms[`${roomID}`].transports[user].producers).forEach(async(kind)=>{
                     
-                    const producer = availableRooms[`${roomID}`].transports[user].producers[kind];
+                    const producer = videoRooms[`${roomID}`].transports[user].producers[kind];
 
-                    if (!producer || !availableRooms[`${roomID}`].router.canConsume({ producerId: producer.id, rtpCapabilities:rtpCapabilities })) {
+                    if (!producer || !videoRooms[`${roomID}`].router.canConsume({ producerId: producer.id, rtpCapabilities:rtpCapabilities })) {
                         return;
                     }
             
@@ -295,7 +334,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
                         paused: false,
                     });
             
-                    availableRooms[`${roomID}`].transports[`${username}`].consumers[`${user}-${kind}`] = consumer;
+                    videoRooms[`${roomID}`].transports[`${username}`].consumers[`${user}-${kind}`] = consumer;
             
                     client.emit("newConsumer", { 
                         consumerId: consumer.id,
@@ -311,26 +350,60 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
     @SubscribeMessage("getRoomData")
     async videoMute(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
-        const { roomID } = body;
+        const { roomID, username } = body;
 
-        if(availableRooms[`${roomID}`]){
-            const room = availableRooms[`${roomID}`];
+        var room;
+        
+        if(videoRooms[`${roomID}`]){
+            room = videoRooms[`${roomID}`];
+            
+            const roomMembers = inRoomUsers[`${roomID}`];
+            client.emit("gotRoomData", {topic: room.topic , creatorUsername: room.creatorUsername , roomMembers});
+            
+        }else if(chatRooms[`${roomID}`]){
+            room = chatRooms[`${roomID}`];
 
+            if(!chatRooms[`${roomID}`]){
+                client.emit("roomEnded");
+                return;
+            }
+    
+            if(username !== chatRooms[`${roomID}`].creatorUsername){
+                if(!waitingUsers[`${roomID}`] || !waitingUsers[`${roomID}`][`${username}`] || !waitingUsers[`${roomID}`][`${username}`]['accepted']){
+                    client.emit("mustWait");
+                    return;
+                }
+            }
+            
             const roomMembers = inRoomUsers[`${roomID}`];
 
+            client.join(`${roomID}`);
+            this.server.to(`${roomID}`).emit("newMember" , {username: username, id: client.id});
+            
+            // Save user to room
+            await this.webSocketService.addUserToRoom(username , roomID);
+
             client.emit("gotRoomData", {topic: room.topic , creatorUsername: room.creatorUsername , roomMembers});
-        } 
+        }
     }
 
     @SubscribeMessage("endRoom")
     async endRoom(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
-        const { roomID } = body;
+        const { roomID, roomType } = body;
 
         delete inRoomUsers[`${roomID}`];
-        delete availableRooms[`${roomID}`];
+        
+        if(roomType === "Video"){
+            delete videoRooms[`${roomID}`];
 
-        client.broadcast.emit("ReceivedRooms" , availableRooms);
-        client.to(`${roomID}`).emit("roomEnded");
+            client.broadcast.emit("VideoRooms" , videoRooms);
+            client.to(`${roomID}`).emit("roomEnded");
+        }else{
+            // Chat
+            delete chatRooms[`${roomID}`];
+            client.broadcast.emit("ChatRooms" , chatRooms);
+            client.to(`${roomID}`).emit("roomEnded");
+        }
     }
 
     @SubscribeMessage("kickClient")
@@ -382,11 +455,11 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
     @SubscribeMessage("acceptUser")
     async acceptUser(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
-        const { roomID, acceptedUsername , acceptedId } = body;
+        const { roomID, acceptedUsername , acceptedId , roomType} = body;
 
         waitingUsers[`${roomID}`][`${acceptedUsername}`]['accepted'] = true;
 
-        this.server.to(acceptedId).emit("accepted");
+        this.server.to(acceptedId).emit("accepted", {roomType});
 
         client.to(`${roomID}`).emit("gotUsersWaiting", waitingUsers[`${roomID}`]);
     }
@@ -399,17 +472,34 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
         client.to(`${roomID}`).emit("gotUsersWaiting", waitingUsers[`${roomID}`]);
     }
+    
+    @SubscribeMessage("leavingChat")
+    async userLeft(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+        const {username, roomID} = body;
+
+        delete waitingUsers[`${roomID}`][`${username}`]; 
+        delete inRoomUsers[`${roomID}`][`${username}`];
+
+        client.to(`${roomID}`).emit("userLeftChat", {username:username});
+    }
+
+    @SubscribeMessage("sendMessage")
+    async signalMessage(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
+        const {username, message, roomID} = body;
+        client.to(`${roomID}`).emit("gotMessage", {message:message , username:username});
+    }
+
 
 
 
 
     @SubscribeMessage("test")
     async test(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
-        const {roomID, username} = body;
+        // const {roomID, username} = body;
 
         // console.log(availableRooms[`${roomID}`].transports[`${username}`].producerTransport.iceState);
-        console.log(inRoomUsers);
-        console.log(client.id);
+        console.log(body);
+        // console.log(client.id);
         
         
         // client.emit("test", {room: availableRooms[`${body.roomID}`]});
