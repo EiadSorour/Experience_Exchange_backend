@@ -6,5 +6,9 @@ import { Message } from "./message.model";
 export class MessageService{
     constructor(@InjectModel(Message) private readonly messageModel:typeof Message){}
 
-    
+    async createMessage(senderUsername:string , text:string , roomID:string): Promise<void>{
+        await this.messageModel.create({senderUsername , text , roomID});
+    }
+
+
 }

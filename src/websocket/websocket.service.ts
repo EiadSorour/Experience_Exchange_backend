@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { MessageService } from "src/message/message.service";
 import { RoomService } from "src/room/room.service";
 import { User } from "src/user/user.model";
 import { UserService } from "src/user/user.service";
@@ -10,6 +11,7 @@ export class WebsocketService{
         private readonly userService:UserService,
         private readonly roomServic:RoomService,
         private readonly userRoomService:UserRoomService,
+        private readonly messageService:MessageService,
     ){}
 
     async saveNewRoom(roomID:string , topic:string , creatorUsername:string): Promise<void>{
@@ -28,5 +30,9 @@ export class WebsocketService{
 
         // Save room into database
         await this.userRoomService.addUserRoom(user.dataValues.userID , roomID);
+    }
+
+    async sendMessageInRoom(senderUsername:string , text:string , roomID:string): Promise<void>{
+        await this.messageService.createMessage(senderUsername , text , roomID);
     }
 }

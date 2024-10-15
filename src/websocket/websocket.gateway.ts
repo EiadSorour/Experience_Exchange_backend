@@ -3,14 +3,7 @@ import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect,
 import { Socket, Server } from "socket.io";
 import { SocketGuard } from "src/guards/socket.guard";
 import * as mediasoup from "mediasoup";
-import {
-    types,
-    version,
-    observer,
-    createWorker,
-    getSupportedRtpCapabilities,
-    parseScalabilityMode
-} from "mediasoup";
+import {types} from "mediasoup";
 import { WebsocketService } from "./websocket.service";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -51,7 +44,6 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     }
 
     handleConnection(client: Socket) {
-        client.emit("getUsername"); 
         console.log(`Client ${client.id} is connected`);
     }
 
@@ -398,11 +390,13 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
             client.broadcast.emit("VideoRooms" , videoRooms);
             client.to(`${roomID}`).emit("roomEnded");
+            client.emit("roomEnded");
         }else{
             // Chat
             delete chatRooms[`${roomID}`];
             client.broadcast.emit("ChatRooms" , chatRooms);
             client.to(`${roomID}`).emit("roomEnded");
+            client.emit("roomEnded");
         }
     }
 
@@ -450,6 +444,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
         this.server.to(rejectedId).emit("rejected");
 
+        client.emit("gotUsersWaiting", waitingUsers[`${roomID}`]);
         client.to(`${roomID}`).emit("gotUsersWaiting", waitingUsers[`${roomID}`]);
     }
 
@@ -461,6 +456,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
         this.server.to(acceptedId).emit("accepted", {roomType});
 
+        client.emit("gotUsersWaiting", waitingUsers[`${roomID}`]);
         client.to(`${roomID}`).emit("gotUsersWaiting", waitingUsers[`${roomID}`]);
     }
 
@@ -486,6 +482,9 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
     @SubscribeMessage("sendMessage")
     async signalMessage(@MessageBody() body: any, @ConnectedSocket() client: Socket) {
         const {username, message, roomID} = body;
+
+        await this.webSocketService.sendMessageInRoom(username , message , roomID);
+
         client.to(`${roomID}`).emit("gotMessage", {message:message , username:username});
     }
 
@@ -498,7 +497,12 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         // const {roomID, username} = body;
 
         // console.log(availableRooms[`${roomID}`].transports[`${username}`].producerTransport.iceState);
-        console.log(body);
+        console.log("*************************************");
+        console.log("inRoom Users: ");
+        console.log(inRoomUsers);
+        console.log("*************************************");
+        console.log("user socket: ");
+        console.log(client.id);
         // console.log(client.id);
         
         
