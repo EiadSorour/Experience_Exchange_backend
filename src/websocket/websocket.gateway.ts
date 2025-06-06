@@ -13,11 +13,11 @@ var inRoomUsers = {};
 var waitingUsers = {};
 
 @UseGuards(SocketGuard)
-@WebSocketGateway(80, {
+@WebSocketGateway(0,{
     namespace: "/rooms",
     cors: {
         credentials: true,
-        origin: process.env.FRONT_ORIGIN,
+        origin: "*",
         methods: ["GET", "POST", "DELETE", "PATCH", "UPDATE"]
     }
 })
