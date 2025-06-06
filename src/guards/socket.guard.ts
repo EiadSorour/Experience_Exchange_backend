@@ -18,6 +18,6 @@ export class SocketGuard implements CanActivate {
             return false;
         }
 
-        return true;
+        return true; 
     }
 }

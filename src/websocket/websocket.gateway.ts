@@ -16,9 +16,10 @@ var waitingUsers = {};
 @WebSocketGateway(0,{
     namespace: "/rooms",
     cors: {
+        origin: 'https://experienceexchangefrontend-production.up.railway.app',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
-        origin: "*",
-        methods: ["GET", "POST", "DELETE", "PATCH", "UPDATE"]
+        allowedHeaders: 'Content-Type, Authorization',
     }
 })
 
@@ -506,7 +507,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         // console.log(client.id);
         
         
-        // client.emit("test", {room: availableRooms[`${body.roomID}`]});
+        client.emit("test", {message: "this is test log"});
     }
     
 }
