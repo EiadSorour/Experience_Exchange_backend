@@ -4,6 +4,7 @@ import { AppExceptionFilter } from './utils/app.ExceptionFilter';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { ensureDatabaseExists } from './utils/database.check';
 // import * as fs from 'fs';
 
 
@@ -16,6 +17,8 @@ async function bootstrap() {
 
   // const app = await NestFactory.create(AppModule, { httpsOptions });
 
+
+  await ensureDatabaseExists();
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new AppExceptionFilter());
