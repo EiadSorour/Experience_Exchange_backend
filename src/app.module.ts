@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { RoomModule } from './room/room.module';
 import { UserRoomModule } from './user_room/userRoom.module';
@@ -12,22 +12,25 @@ import { MessageModule } from './message/message.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env.development',
     }),
-    SequelizeModule.forRoot({
-      dialect: process.env.DIALECT_USERNAME as any,
-      host: process.env.HOST,
-      port: process.env.PORT as any,
-      username: process.env.DIALECT_USERNAME,
-      password: process.env.PASSWORD,
-      database: process.env.DATABASE,
-      autoLoadModels: true,
-      synchronize: true
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],  
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        dialect: "postgres",
+        host: configService.get("DB_HOST"),
+        port: parseInt(configService.get("DB_PORT")),
+        username: configService.get("DB_USERNAME"),  
+        password: configService.get("DB_PASSWORD"),
+        database: configService.get("DB_NAME"),
+        autoLoadModels: true,
+        synchronize: true,
+      }),
     }),
     RoomModule, UserModule ,UserRoomModule, MessageModule ,AuthModule, WebsocketModule
   ],
   controllers: [],
-  providers: [],
+  providers: [], 
   exports: []
-})
+}) 
 export class AppModule { }

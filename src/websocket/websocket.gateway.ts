@@ -16,7 +16,7 @@ var waitingUsers = {};
 @WebSocketGateway(0,{
     namespace: "/rooms",
     cors: {
-        origin: 'https://experienceexchangefrontend-production.up.railway.app',
+        origin: process.env.FRONT_ORIGIN,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
         allowedHeaders: 'Content-Type, Authorization',

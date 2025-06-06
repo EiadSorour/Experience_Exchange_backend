@@ -25,11 +25,11 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({whitelist:true}));
   app.use(cookieParser());
   app.enableCors({
-      origin: 'https://experienceexchangefrontend-production.up.railway.app',
+      origin: process.env.FRONT_ORIGIN,
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
       credentials: true,
       allowedHeaders: 'Content-Type, Authorization',
-  });
+  }); 
 
   const config = new DocumentBuilder()
   .setTitle('Experience Exchange App')
@@ -40,9 +40,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   
-  const port = process.env.PORT || 3001;
-  await app.listen(process.env.PORT || 3001);
-  console.log(`Nest.js running on port ${port}`);
-  
+  const port = parseInt(process.env.PORT) || 3001; 
+  await app.listen(port);
+  console.log(`Nest.js running on port ${port}`); 
+
 }
 bootstrap();

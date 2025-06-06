@@ -11,7 +11,10 @@ export class AuthGurad implements CanActivate {
         const request = context.switchToHttp().getRequest();
         
         try{
+            console.log(`Entered AuthGuard`);
+            console.log(`request cookies : ${request.cookies.access_token || "None"}`);
 			const accessToken = request.cookies.access_token;
+            console.log(`Access token inside AuthGuard : ${accessToken || "None"}`);
             const payload = this.jwtService.verify(accessToken);
             request.payload = payload;
         }catch(error){
