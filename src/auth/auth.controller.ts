@@ -17,7 +17,7 @@ export class AuthController{
         const tokens = await this.authService.register(userRegisterDto);
         const accessToken = tokens.accessToken;
         const refreshToken = tokens.refreshToken;
-        res.cookie("refresh_token" , refreshToken , {httpOnly: true , sameSite:"strict"});
+        res.cookie("refresh_token" , refreshToken , {httpOnly: true , secure: true, sameSite:"none", domain: "up.railway.app"});
         res.send( {status: HttpStatusMessage.SUCCESS , data: {accessToken}} );
     }
 
@@ -27,7 +27,7 @@ export class AuthController{
         const tokens = await this.authService.login(userLoginDto);
         const accessToken = tokens.accessToken;
         const refreshToken = tokens.refreshToken;
-        res.cookie("refresh_token" , refreshToken , {httpOnly: true , sameSite:"strict"});
+        res.cookie("refresh_token" , refreshToken , {httpOnly: true , secure: true, sameSite:"none", domain: "up.railway.app"});
         res.send( {status: HttpStatusMessage.SUCCESS , data: {accessToken}} );
     }
 
@@ -51,7 +51,7 @@ export class AuthController{
     @Get("/logout")
     @HttpCode(HttpStatus.OK)
     async logout(@Res() res:Response){
-        res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'strict' });
+        res.clearCookie('refresh_token', { httpOnly: true, secure: true ,sameSite: 'none', domain: "up.railway.app" });
         res.send( {status: HttpStatusMessage.SUCCESS , data: {message: "logged out successfully"}} );
     }
 

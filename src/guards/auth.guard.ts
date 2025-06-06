@@ -12,7 +12,7 @@ export class AuthGurad implements CanActivate {
         
         try{
             console.log(`Entered AuthGuard`);
-            console.log(`request cookies : ${request.cookies.access_token || "None"}`);
+            console.log(`request cookies : ${request.cookies || "None"}`);
 			const accessToken = request.cookies.access_token;
             console.log(`Access token inside AuthGuard : ${accessToken || "None"}`);
             const payload = this.jwtService.verify(accessToken);
