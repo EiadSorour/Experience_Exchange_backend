@@ -16,7 +16,7 @@ export class AuthService{
     ){}
 
     async register(userRegisterDto: UserRegisterDto): Promise<{accessToken:string,refreshToken:string}>{
-        const oldUser:User = await this.userService.getUserByUsername(userRegisterDto.username);
+        const oldUser:User = await this.userService.getUserByUsername(userRegisterDto.username.trim().toLowerCase());
         if(oldUser){
             throw new AppError("User already exists" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
         }
@@ -35,7 +35,7 @@ export class AuthService{
     }
 
     async login(userLoginDto:UserLoginDto): Promise<{accessToken:string,refreshToken:string}>{
-        const user:User = await this.userService.getUserByUsername(userLoginDto.username);
+        const user:User = await this.userService.getUserByUsername(userLoginDto.username.trim().toLowerCase());
         if(!user){
             throw new AppError("User doesn't exist" , HttpStatusMessage.FAIL , HttpStatus.BAD_REQUEST);
         }
