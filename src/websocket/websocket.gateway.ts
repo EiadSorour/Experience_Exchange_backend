@@ -36,8 +36,10 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
 
     async onModuleInit() {
         this.worker = await mediasoup.createWorker({
-            rtcMinPort: 40000,
-            rtcMaxPort: 41999
+            rtcMinPort: 10000,
+            rtcMaxPort: 10100,
+            logLevel: 'warn',
+            logTags: ['info', 'ice', 'dtls', 'rtp', 'srtp', 'rtcp']
         }); 
     } 
 
@@ -166,7 +168,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         this.server.to(`${roomID}`).emit("newMember" , {username: username, id: client.id});
 
         const transport = await videoRooms[`${roomID}`].router.createWebRtcTransport({
-            listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
+            listenIps: [{ ip: '0.0.0.0', announcedIp: "https://experienceexchangebackend-production.up.railway.app" }],
             enableUdp: true,
             enableTcp: true,
             preferUdp: true,
@@ -238,7 +240,7 @@ export class WebsocketGateway implements OnGatewayInit, OnGatewayConnection, OnG
         }
 
         const transport = await videoRooms[`${roomID}`].router.createWebRtcTransport({
-            listenIps: [{ ip: '127.0.0.1', announcedIp: null }],
+            listenIps: [{ ip: '0.0.0.0', announcedIp: "https://experienceexchangebackend-production.up.railway.app" }],
             enableUdp: true,
             enableTcp: true,
             preferUdp: true,
